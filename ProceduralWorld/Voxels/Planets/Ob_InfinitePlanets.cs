@@ -60,13 +60,35 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
 
     public class Ob_InfinitePlanets_MoonDesc : Ob_InfinitePlanets_BodyDesc
     {
+        [XmlElement("Moon2Desc")]
+        public List<Ob_InfinitePlanets_Moon2Desc> Moon2Types = new List<Ob_InfinitePlanets_Moon2Desc>();
 
+        public Ob_InfinitePlanets_Range Moon2Count =
+            new Ob_InfinitePlanets_Range() { Min = 0, Max = 1 };
+
+        public Ob_InfinitePlanets_Range Moon2Spacing =
+            new Ob_InfinitePlanets_Range() { Min = 50e2, Max = 150e2, Distribution = Ob_InfinitePlanets_Range_Distribution.Normal };
+
+        public Ob_InfinitePlanets_MoonDesc()
+        {
+            OrbitLocationDeg = new Ob_InfinitePlanets_Range() { Min = -5, Max = 5 };
+        }
+    }
+
+    public class Ob_InfinitePlanets_Moon2Desc : Ob_InfinitePlanets_BodyDesc
+    {
+        
     }
 
     public class Ob_InfinitePlanets_BodyDesc
     {
         public double Probability;
         public Ob_InfinitePlanets_Range BodyRadius;
+        public Ob_InfinitePlanets_Range Gravity = new Ob_InfinitePlanets_Range() { Min = 0.9, Max = 1.1 };
+        public bool GravityRelative = true;
+        public double GravityFalloff = (double)7.0;
+        public bool AddGps = false;
+        public bool SpherizeWithDistance = true;
         public Ob_InfinitePlanets_Range OrbitRadius = new Ob_InfinitePlanets_Range(){Min=0, Max=1e9};
         public Ob_InfinitePlanets_Range OrbitInclinationDeg = new Ob_InfinitePlanets_Range() { Min = -5, Max = 5 };
         public Ob_InfinitePlanets_Range OrbitLocationDeg =

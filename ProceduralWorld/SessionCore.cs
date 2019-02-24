@@ -96,7 +96,11 @@ namespace Equinox.ProceduralWorld
                                         {
                                             Generator = new SerializableDefinitionId(typeof(MyObjectBuilder_PlanetGeneratorDefinition), "Moon"),
                                             BodyRadius = new Ob_InfinitePlanets_Range() {Min = 40e3, Max = 60e3},
-                                            Probability = 1
+                                            Probability = 1,
+                                            Moon2Count = new Ob_InfinitePlanets_Range() {Min = 0, Max = 0},
+                                            Moon2Types = new List<Ob_InfinitePlanets_Moon2Desc>()
+                                            {
+                                            }
                                         }
                                     }
                                 },
@@ -124,13 +128,21 @@ namespace Equinox.ProceduralWorld
                                         {
                                             Generator = new SerializableDefinitionId(typeof(MyObjectBuilder_PlanetGeneratorDefinition), "Europa"),
                                             BodyRadius = new Ob_InfinitePlanets_Range() {Min = 30e3, Max = 50e3},
-                                            Probability = 1
+                                            Probability = 1,
+                                            Moon2Count = new Ob_InfinitePlanets_Range() {Min = 0, Max = 0},
+                                            Moon2Types = new List<Ob_InfinitePlanets_Moon2Desc>()
+                                            {
+                                            }
                                         },
                                         new Ob_InfinitePlanets_MoonDesc()
                                         {
                                             Generator = new SerializableDefinitionId(typeof(MyObjectBuilder_PlanetGeneratorDefinition), "Titan"),
                                             BodyRadius = new Ob_InfinitePlanets_Range() {Min = 75e3, Max = 100e3},
-                                            Probability = 1
+                                            Probability = 1,
+                                            Moon2Count = new Ob_InfinitePlanets_Range() {Min = 0, Max = 0},
+                                            Moon2Types = new List<Ob_InfinitePlanets_Moon2Desc>()
+                                            {
+                                            }
                                         }
                                     }
                                 }

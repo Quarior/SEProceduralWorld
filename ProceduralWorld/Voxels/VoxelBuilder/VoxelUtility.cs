@@ -169,7 +169,8 @@ namespace Equinox.ProceduralWorld.Voxels.VoxelBuilder
             return 1.75f;
         }
 
-        public static MyPlanet SpawnPlanet(Vector3D pos, MyPlanetGeneratorDefinition generatorDef, long seed, float size, string storageName)
+        public static MyPlanet SpawnPlanet(Vector3D pos, MyPlanetGeneratorDefinition generatorDef, long seed, float size, string storageName, float Gravity = (float)1.0,
+            bool GravityRelative = true, float GravityFalloff = (float)0.0, bool AddGps = false, bool SpherizeWithDistance = true)
         {
             var provider = new PlanetStorageProviderBuilder();
             provider.Init(seed, generatorDef, size / 2f);
@@ -186,9 +187,9 @@ namespace Equinox.ProceduralWorld.Voxels.VoxelBuilder
             var innerRadius = averagePlanetRadius + minHillSize;
 
             var atmosphereRadius = AtmosphereRadius(generatorDef.AtmosphereSettings);
-            atmosphereRadius *= (float) provider.Radius;
+            atmosphereRadius *= (float)provider.Radius;
 
-            var random = new Random((int) seed);
+            var random = new Random((int)seed);
             var redAtmosphereShift = random.NextFloat(generatorDef.HostileAtmosphereColorShift.R.Min, generatorDef.HostileAtmosphereColorShift.R.Max);
             var greenAtmosphereShift = random.NextFloat(generatorDef.HostileAtmosphereColorShift.G.Min, generatorDef.HostileAtmosphereColorShift.G.Max);
             var blueAtmosphereShift = random.NextFloat(generatorDef.HostileAtmosphereColorShift.B.Min, generatorDef.HostileAtmosphereColorShift.B.Max);
@@ -199,7 +200,7 @@ namespace Equinox.ProceduralWorld.Voxels.VoxelBuilder
             atmosphereWavelengths.Y = MathHelper.Clamp(atmosphereWavelengths.Y, 0.1f, 1.0f);
             atmosphereWavelengths.Z = MathHelper.Clamp(atmosphereWavelengths.Z, 0.1f, 1.0f);
 
-            var entityId = GetPlanetEntityId($"proc_planet_{provider.Seed}_{(int) provider.Radius}_{(long) pos.X}_{(long) pos.Y}_{(long) pos.Z}");
+            var entityId = GetPlanetEntityId($"proc_planet_{provider.Seed}_{(int)provider.Radius}_{(long)pos.X}_{(long)pos.Y}_{(long)pos.Z}");
             var result = MyAPIGateway.Entities.GetEntityById(entityId);
             if (result != null)
                 return result as MyPlanet;
@@ -210,18 +211,31 @@ namespace Equinox.ProceduralWorld.Voxels.VoxelBuilder
             CastProhibit(storage, out planetInitArguments.Storage);
             var posMinCorner = pos - provider.Radius;
             planetInitArguments.PositionMinCorner = posMinCorner;
-            planetInitArguments.Radius = (float) provider.Radius;
+            planetInitArguments.Radius = (float)provider.Radius;
             planetInitArguments.AtmosphereRadius = atmosphereRadius;
-            planetInitArguments.MaxRadius = (float) outerRadius;
-            planetInitArguments.MinRadius = (float) innerRadius;
+            planetInitArguments.MaxRadius = (float)outerRadius;
+            planetInitArguments.MinRadius = (float)innerRadius;
             planetInitArguments.HasAtmosphere = generatorDef.HasAtmosphere;
             planetInitArguments.AtmosphereWavelengths = atmosphereWavelengths;
-            planetInitArguments.GravityFalloff = generatorDef.GravityFalloffPower;
+            if (GravityFalloff == null | GravityFalloff == 0)
+            {
+                planetInitArguments.GravityFalloff = generatorDef.GravityFalloffPower;
+            }
+            else
+            {
+                planetInitArguments.GravityFalloff = GravityFalloff;
+            }
             planetInitArguments.MarkAreaEmpty = true;
             MoveAtmosphereSettings(generatorDef.AtmosphereSettings, out planetInitArguments.AtmosphereSettings);
-            planetInitArguments.SurfaceGravity = generatorDef.SurfaceGravity;
-            planetInitArguments.AddGps = false;
-            planetInitArguments.SpherizeWithDistance = true;
+            if (GravityRelative == true) {
+                planetInitArguments.SurfaceGravity = generatorDef.SurfaceGravity * Gravity;
+            }
+            else
+            {
+                planetInitArguments.SurfaceGravity = Gravity;
+            }
+            planetInitArguments.AddGps = AddGps;
+            planetInitArguments.SpherizeWithDistance = SpherizeWithDistance;
             planetInitArguments.Generator = generatorDef;
             planetInitArguments.UserCreated = false;
             planetInitArguments.InitializeComponents = true;

@@ -77,7 +77,8 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
             {
                 var generatorDef =
                     MyDefinitionManagerBase.Static.GetDefinition<MyPlanetGeneratorDefinition>(body.GeneratorId);
-                body.Result = VoxelUtility.SpawnPlanet(body.Position.Translation, generatorDef, body.Seed, (float)body.Radius, body.Name);
+                body.Result = VoxelUtility.SpawnPlanet(body.Position.Translation, generatorDef, body.Seed, (float)body.Radius, body.Name,
+                    (float)body.Gravity, body.GravityRelative, (float)body.GravityFalloff, body.AddGps, body.SpherizeWithDistance);
                 return true;
             }
             return false;
@@ -109,6 +110,11 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
             public MyPlanet Result;
             public long Seed;
             public string Name;
+            public double Gravity;
+            public bool GravityRelative;
+            public double GravityFalloff;
+            public bool AddGps;
+            public bool SpherizeWithDistance;
         }
 
         private class ProceduralSystem : ProceduralObject
@@ -120,6 +126,23 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                 public Ob_InfinitePlanets_MoonDesc Desc;
                 public double OrbitRadius;
                 public double BodyRadius;
+                public double Gravity;
+                public bool GravityRelative;
+                public double GravityFalloff;
+                public bool AddGps;
+                public bool SpherizeWithDistance;
+            }
+
+            private struct Moon2BuilderInfo
+            {
+                public Ob_InfinitePlanets_Moon2Desc Desc;
+                public double OrbitRadius;
+                public double BodyRadius;
+                public double Gravity;
+                public bool GravityRelative;
+                public double GravityFalloff;
+                public bool AddGps;
+                public bool SpherizeWithDistance;
             }
 
             private static T SampleBodies<T>(IReadOnlyCollection<T> input, Random rand, double currentRadius) where T : Ob_InfinitePlanets_BodyDesc
@@ -151,7 +174,8 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                 var planetCount = (int) desc.PlanetCount.Sample(rand);
                 var currentRadius = 0D;
                 var moonBuffer = new List<MoonBuilderInfo>();
-                module.Info("Generating system at {0}.  Target planet count is {1}", position.Translation, planetCount);
+                var moon2Buffer = new List<Moon2BuilderInfo>();
+                module.Info("Generating system {0} at {1}.  Target planet count is {2}", rand, position.Translation, planetCount);
                 module.IncreaseIndent();
                 for (var planetId = 0; planetId < planetCount; planetId++)
                 {
@@ -167,6 +191,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                     currentRadius = Math.Max(currentRadius, planet.OrbitRadius.Min);
 
                     var planetRadius = planet.BodyRadius.Sample(rand);
+                    var planetGravity = planet.Gravity.Sample(rand);
                     var currentMoonRadius = planetRadius * 2 + planet.MoonSpacing.Sample(rand);
                     moonBuffer.Clear();
                     {
@@ -179,13 +204,53 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                                 break;
 
                             var moonRadius = moon.BodyRadius.Sample(rand);
+                            var moonGravity = moon.Gravity.Sample(rand);
+                            // var moonGravityRelative = true;
                             moonBuffer.Add(new MoonBuilderInfo()
                             {
                                 BodyRadius = moonRadius,
                                 Desc = moon,
+                                Gravity = moonGravity,
+                                GravityRelative = moon.GravityRelative,
+                                GravityFalloff = moon.GravityFalloff,
+                                SpherizeWithDistance = moon.SpherizeWithDistance,
+                                AddGps = moon.AddGps,
                                 OrbitRadius = currentMoonRadius
                             }
                             );
+                            
+                            var moon2Count = moon.Moon2Count.Sample(rand);
+                            var currentMoon2Radius = moonRadius * 2 + moon.Moon2Spacing.Sample(rand);
+                            moon2Buffer.Clear();
+                            {
+                                while (moon2Count > 0)
+                                {
+                                    Ob_InfinitePlanets_Moon2Desc moon2 =
+                                        SampleBodies(moon.Moon2Types, rand, currentMoon2Radius);
+                                    if (moon2 == null)
+                                        break;
+
+                                    var moon2Radius = moon2.BodyRadius.Sample(rand);
+                                    var moon2Gravity = moon2.Gravity.Sample(rand);
+                                    // var moon2GravityRelative = true;
+                                    moon2Buffer.Add(new Moon2BuilderInfo()
+                                    {
+                                        BodyRadius = moon2Radius,
+                                        Desc = moon2,
+                                        Gravity = moon2Gravity,
+                                        GravityRelative = moon2.GravityRelative,
+                                        GravityFalloff = moon2.GravityFalloff,
+                                        SpherizeWithDistance = moon2.SpherizeWithDistance,
+                                        AddGps = moon2.AddGps,
+                                        OrbitRadius = currentMoon2Radius
+                                    }
+                                    );
+                                    currentMoon2Radius += moon2Radius;
+                                    currentMoon2Radius += moon.Moon2Spacing.Sample(rand);
+                                    moon2Count--;
+                                }
+                            }
+
                             currentMoonRadius += moonRadius;
                             currentMoonRadius += planet.MoonSpacing.Sample(rand);
                             moonCount--;
@@ -206,8 +271,13 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                         Radius = planetRadius,
                         Result = null,
                         Seed = rand.NextLong(),
-                        Name = string.Format("sys_{0:X16}_{1:X2}_{2}", seed, planetId, planet.Generator.SubtypeName)
-                    });
+                        Name = string.Format("sys_{0:X16}_{1:X2}", seed, planetId+1),
+                        Gravity = planetGravity,
+                        GravityRelative = planet.GravityRelative,
+                        GravityFalloff = planet.GravityFalloff,
+                        AddGps = planet.AddGps,
+                        SpherizeWithDistance = planet.SpherizeWithDistance
+        });
                     module.Info("- {0} w/ radius {1}, orbiting at {2}, at {3}", planet.Generator.SubtypeName, planetRadius, currentRadius, orbitalPlane.Translation);
                     module.IncreaseIndent();
                     for (var moonId = 0; moonId < moonBuffer.Count; moonId++)
@@ -227,8 +297,40 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                             Position = moonPlane,
                             Result = null,
                             Seed = rand.NextLong(),
-                            Name = string.Format("sys_{0:X16}_{1:X2}_{2:X2}_{3}", seed, planetId, moonId, moon.Desc.Generator.SubtypeName)
+                            Name = string.Format("sys_{0:X16}_{1:X2}_{2:X2}", seed, planetId+1, moonId+1),
+                            Gravity = moon.Gravity,
+                            GravityRelative = moon.GravityRelative,
+                            GravityFalloff = moon.GravityFalloff,
+                            AddGps = moon.AddGps,
+                            SpherizeWithDistance = moon.SpherizeWithDistance
                         });
+
+                        for (var moon2Id = 0; moon2Id < moon2Buffer.Count; moon2Id++)
+                        {
+                            var moon2 = moon2Buffer[moon2Id];
+                            var moon2Plane =
+                                MatrixD.CreateRotationX(moon2.Desc.OrbitInclinationDeg.Sample(rand) * (Math.PI / 180D)) *
+                                orbitalPlane;
+                            var moon2Position = CreateXZDir(moon2.Desc.OrbitLocationDeg.Sample(rand) * (Math.PI / 180D)) *
+                                               moon2.OrbitRadius;
+                            moon2Plane = MatrixD.CreateTranslation(moon2Position) * moon2Plane;
+                            module.Info("++ {0} w/ radius {1}, orbiting at {2}, at {3}", moon2.Desc.Generator.SubtypeName, moon2.BodyRadius, moon2.OrbitRadius, moon2Plane.Translation);
+                            Bodies.Add(new ProceduralBody()
+                            {
+                                GeneratorId = moon2.Desc.Generator,
+                                Radius = moon2.BodyRadius,
+                                Position = moon2Plane,
+                                Result = null,
+                                Seed = rand.NextLong(),
+                                Name = string.Format("sys_{0:X16}_{1:X2}_{2:X2}_{3:X2}", seed, planetId+1, moonId+1, moon2Id+1),
+                                Gravity = moon2.Gravity,
+                                GravityRelative = moon2.GravityRelative,
+                                GravityFalloff = moon2.GravityFalloff,
+                                AddGps = moon2.AddGps,
+                                SpherizeWithDistance = moon2.SpherizeWithDistance
+                            });
+                        }
+
                     }
                     module.DecreaseIndent();
 
