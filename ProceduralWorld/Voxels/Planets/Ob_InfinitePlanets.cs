@@ -35,7 +35,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
         public double MinDistanceFromOrigin = 0;
 
         public Ob_InfinitePlanets_Range PlanetCount =
-            new Ob_InfinitePlanets_Range() { Min = 2, Max = 7 };
+            new Ob_InfinitePlanets_Range() { Min = 0, Max = 0 };
 
         public Ob_InfinitePlanets_Range PlanetSpacing =
             new Ob_InfinitePlanets_Range() { Min = 2000e3, Max = 6000e3, Distribution = Ob_InfinitePlanets_Range_Distribution.Normal };
@@ -47,7 +47,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
         public List<Ob_InfinitePlanets_MoonDesc> MoonTypes = new List<Ob_InfinitePlanets_MoonDesc>();
 
         public Ob_InfinitePlanets_Range MoonCount =
-            new Ob_InfinitePlanets_Range() { Min = 0, Max = 2 };
+            new Ob_InfinitePlanets_Range() { Min = 0, Max = 0 };
 
         public Ob_InfinitePlanets_Range MoonSpacing =
             new Ob_InfinitePlanets_Range() { Min = 50e3, Max = 150e3, Distribution = Ob_InfinitePlanets_Range_Distribution.Normal };
@@ -64,7 +64,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
         public List<Ob_InfinitePlanets_Moon2Desc> Moon2Types = new List<Ob_InfinitePlanets_Moon2Desc>();
 
         public Ob_InfinitePlanets_Range Moon2Count =
-            new Ob_InfinitePlanets_Range() { Min = 0, Max = 1 };
+            new Ob_InfinitePlanets_Range() { Min = 0, Max = 0 };
 
         public Ob_InfinitePlanets_Range Moon2Spacing =
             new Ob_InfinitePlanets_Range() { Min = 50e2, Max = 150e2, Distribution = Ob_InfinitePlanets_Range_Distribution.Normal };

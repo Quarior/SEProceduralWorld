@@ -175,7 +175,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                 var currentRadius = 0D;
                 var moonBuffer = new List<MoonBuilderInfo>();
                 var moon2Buffer = new List<Moon2BuilderInfo>();
-                module.Info("Generating system {0} at {1}.  Target planet count is {2}", rand, position.Translation, planetCount);
+                module.Info("Generating system {0} at {1}.  Target planet count is {2}.", rand, position.Translation, planetCount);
                 module.IncreaseIndent();
                 for (var planetId = 0; planetId < planetCount; planetId++)
                 {
@@ -205,7 +205,6 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
 
                             var moonRadius = moon.BodyRadius.Sample(rand);
                             var moonGravity = moon.Gravity.Sample(rand);
-                            // var moonGravityRelative = true;
                             moonBuffer.Add(new MoonBuilderInfo()
                             {
                                 BodyRadius = moonRadius,
@@ -232,7 +231,6 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
 
                                     var moon2Radius = moon2.BodyRadius.Sample(rand);
                                     var moon2Gravity = moon2.Gravity.Sample(rand);
-                                    // var moon2GravityRelative = true;
                                     moon2Buffer.Add(new Moon2BuilderInfo()
                                     {
                                         BodyRadius = moon2Radius,
@@ -278,7 +276,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                         AddGps = planet.AddGps,
                         SpherizeWithDistance = planet.SpherizeWithDistance
         });
-                    module.Info("- {0} w/ radius {1}, orbiting at {2}, at {3}", planet.Generator.SubtypeName, planetRadius, currentRadius, orbitalPlane.Translation);
+                    module.Info("- {0} w/ radius {1}, orbiting at {2}, at {3}.  Target moon count is {4}.", planet.Generator.SubtypeName, planetRadius, currentRadius, orbitalPlane.Translation, moonBuffer.Count);
                     module.IncreaseIndent();
                     for (var moonId = 0; moonId < moonBuffer.Count; moonId++)
                     {
@@ -289,7 +287,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                         var moonPosition = CreateXZDir(moon.Desc.OrbitLocationDeg.Sample(rand) * (Math.PI / 180D)) *
                                            moon.OrbitRadius;
                         moonPlane = MatrixD.CreateTranslation(moonPosition) * moonPlane;
-                        module.Info("+ {0} w/ radius {1}, orbiting at {2}, at {3}", moon.Desc.Generator.SubtypeName, moon.BodyRadius, moon.OrbitRadius, moonPlane.Translation);
+                        module.Info("+ {0} w/ radius {1}, orbiting at {2}, at {3}.  Target moon count is {4}.", moon.Desc.Generator.SubtypeName, moon.BodyRadius, moon.OrbitRadius, moonPlane.Translation, moon2Buffer.Count);
                         Bodies.Add(new ProceduralBody()
                         {
                             GeneratorId = moon.Desc.Generator,
@@ -305,12 +303,13 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                             SpherizeWithDistance = moon.SpherizeWithDistance
                         });
 
+                        module.IncreaseIndent();
                         for (var moon2Id = 0; moon2Id < moon2Buffer.Count; moon2Id++)
                         {
                             var moon2 = moon2Buffer[moon2Id];
                             var moon2Plane =
                                 MatrixD.CreateRotationX(moon2.Desc.OrbitInclinationDeg.Sample(rand) * (Math.PI / 180D)) *
-                                orbitalPlane;
+                                moonPlane;
                             var moon2Position = CreateXZDir(moon2.Desc.OrbitLocationDeg.Sample(rand) * (Math.PI / 180D)) *
                                                moon2.OrbitRadius;
                             moon2Plane = MatrixD.CreateTranslation(moon2Position) * moon2Plane;
@@ -330,6 +329,7 @@ namespace Equinox.ProceduralWorld.Voxels.Planets
                                 SpherizeWithDistance = moon2.SpherizeWithDistance
                             });
                         }
+                        module.DecreaseIndent();
 
                     }
                     module.DecreaseIndent();
